@@ -15,7 +15,7 @@
 body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;
   background-image:radial-gradient(900px 500px at 90% -10%,#3a1f6b55,transparent),radial-gradient(700px 400px at -10% 110%,#ff9f6b22,transparent)}
 header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line)}
-h1{font-size:1.4rem;color:var(--cream)} h1 span{color:var(--purple)}
+h1{line-height:0} .logo{height:44px;width:auto;display:block}
 h2{font-size:1.05rem;color:var(--cream);margin-bottom:12px}
 nav{display:flex;gap:6px;flex-wrap:wrap}
 nav button,.btn{background:var(--card);color:var(--text);border:1px solid var(--line);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:.9rem}
@@ -53,7 +53,7 @@ td{padding:9px 8px;border-bottom:1px solid #2a2146}
 .day:hover{border-color:var(--purple)} .day.sel{border-color:var(--orange)} .day.blank{background:transparent;cursor:default}
 .day.today .n{color:var(--orange);font-weight:700}
 .day .n{font-size:.8rem;color:var(--muted)} .day .t{font-size:.78rem;color:var(--cream);font-weight:600;word-break:break-all}
-.day.heat1{background:#3a2a66}.day.heat2{background:#523690}.day.heat3{background:#6d44bd}
+.day.heat1{background:#523690}.day.heat3{background:#6d44bd}
 .insight{padding:10px 12px;background:var(--card2);border-left:3px solid var(--orange);border-radius:8px;margin-bottom:8px;font-size:.9rem}
 .bar{height:8px;border-radius:9px;background:var(--card2);overflow:hidden;margin-top:5px}
 .bar i{display:block;height:100%}
@@ -70,25 +70,63 @@ input::-webkit-calendar-picker-indicator{filter:sepia(1) saturate(3) hue-rotate(
 .mbox .mtitle{padding-right:36px}
 #dayModal .mbox table{font-size:.85rem}
 .calwrap{grid-template-columns:2fr 1fr}
+nav .pill,nav .lbl .m{display:none}
+nav .pill svg{display:none}
 @media(max-width:600px){.row{grid-template-columns:1fr}main{padding:12px}
+  body{padding-bottom:100px}
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-wrap:nowrap;gap:0;background:#1c1530;border-top:1px solid var(--line);padding:10px 4px calc(14px + env(safe-area-inset-bottom))}
+  nav button{flex:1;min-width:0;background:none!important;border:0;border-radius:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:4px;color:#f3eafc}
+  nav button.active{background:none}
+  nav .pill{display:flex;align-items:center;justify-content:center;width:44px;height:34px;border-radius:99px;transition:width .25s,background .25s}
+  nav .pill svg{display:block;width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  nav button.active .pill{width:72px;background:linear-gradient(135deg,#7C4DFF,#9B6DFF)}
+  nav .lbl .d{display:none}
+  nav .lbl{display:none;font-size:.85rem;font-weight:600;color:var(--cream);white-space:nowrap}
+  nav button.active .lbl{display:block}
+  nav .lbl .m{display:inline}
   .calwrap{grid-template-columns:1fr}#dayCard{display:none}.cal{gap:4px}.day{padding:4px;min-height:64px}}
+body:not(.authed) header,body:not(.authed) main,body:not(.authed) #backup{display:none}
+body.authed #auth{display:none}
+#auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+#auth .abox{width:100%;max-width:400px}
+#auth .alogo{display:block;height:56px;width:auto;margin:0 auto 20px}
+.atabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px}
+.atabs button{background:var(--card2);color:var(--text);border:1px solid var(--line);padding:10px;border-radius:10px;cursor:pointer;font-size:.95rem}
+.atabs button.on{background:linear-gradient(135deg,var(--purple2),var(--purple));border-color:transparent}
+.pw{position:relative;display:block}.pw input{padding-right:44px}
+.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--muted);cursor:pointer;padding:8px;line-height:0}
+.eye svg{width:22px;height:22px}.eye .slash{display:none}.eye.on{color:var(--cream)}.eye.on .slash{display:block}
+.aerr{color:var(--bad);font-size:.85rem;min-height:1.2em}
+.greet{font-size:1.5rem;color:var(--cream);margin-bottom:14px;font-weight:600}
 </style>
 </head>
 <body>
+<div id="auth"><div class="card abox">
+  <img src="logo.png" alt="Spendly" class="alogo">
+  <div class="atabs"><button type="button" id="tabLogin" class="on">Log in</button><button type="button" id="tabSignup">Sign up</button></div>
+  <form id="authForm" autocomplete="on">
+    <label id="anameWrap" style="display:none">Name (shown on your dashboard)<input id="anameIn" autocomplete="name" maxlength="40"></label>
+    <label>Username<input id="auserIn" required autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+    <label>Password (at least 8 characters)<span class="pw"><input type="password" id="apassIn" required minlength="8" autocomplete="current-password"><button type="button" class="eye" id="eyeBtn" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="slash" d="M4 4l16 16"/></svg></button></span></label>
+    <div class="aerr" id="aerr"></div>
+    <button class="btn primary" type="submit" id="aSubmit">Log in</button>
+  </form>
+</div></div>
 <header>
-  <h1>💜 Spend<span>ly</span></h1>
+  <h1><img src="logo.png" alt="Spendly" class="logo"></h1>
   <nav id="nav">
-    <button data-tab="dash" class="active">Dashboard</button>
-    <button data-tab="add">Add Expense</button>
-    <button data-tab="analytics">Analytics</button>
-    <button data-tab="calendar">Calendar</button>
-    <button data-tab="savings">Savings</button>
+    <button data-tab="dash" aria-label="Dashboard" class="active"><span class="pill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg></span><span class="lbl"><span class="d">Dashboard</span><span class="m">Dashboard</span></span></button>
+    <button data-tab="analytics" aria-label="Analytics"><span class="pill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20v-5M12 20V8M18 20v-9"/></svg></span><span class="lbl"><span class="d">Analytics</span><span class="m">Analytics</span></span></button>
+    <button data-tab="add" aria-label="Add Expenses"><span class="pill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="lbl"><span class="d">Add Expense</span><span class="m">Add Expenses</span></span></button>
+    <button data-tab="calendar" aria-label="Calendar"><span class="pill"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 11h16"/></svg></span><span class="lbl"><span class="d">Calendar</span><span class="m">Calendar</span></span></button>
+    <button data-tab="savings" aria-label="Savings"><span class="pill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h12a2 2 0 0 1 2 2v1H5zM5 7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/><rect x="14" y="11" width="7" height="4" rx="2"/></svg></span><span class="lbl"><span class="d">Savings</span><span class="m">Savings</span></span></button>
   </nav>
 </header>
 <main>
 
 <!-- DASHBOARD -->
 <section id="dash" class="active">
+  <div class="greet" id="greet"></div>
   <div class="toolbar"><label style="display:flex;flex-direction:row;align-items:center;gap:8px">Month <input type="month" class="monthPick"></label></div>
   <div class="grid cols4" id="stats"></div>
   <div class="grid cols2" style="margin-top:16px">
@@ -191,7 +229,9 @@ input::-webkit-calendar-picker-indicator{filter:sepia(1) saturate(3) hue-rotate(
 <div class="modal" id="editModal"><div class="mbox"><button class="btn small mclose" onclick="closeEdit()">✕</button><div id="editBody"></div></div></div>
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const KEY='spendly.v1';
+const LEGACY_KEY='spendly.v1',TOKEN_KEY='spendly.token',USER_KEY='spendly.user';
+let KEY=LEGACY_KEY,token='',me=null;
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
 const CATS={'Grocery':[], 'Food & Beverages':[], 'Shopping':['Makeup','Skincare','Clothes','Shoes','Bags & Accessories','Electronics','Other'],
   'Transport':[], 'Bills':[], 'Health':[], 'Entertainment':[], 'Other':[]};
 const COLORS=['#9b6dff','#ff9f6b','#4cc9f0','#6fe0b0','#f72585','#ffd166','#06d6a0','#b8b8ff'];
@@ -207,36 +247,67 @@ document.addEventListener('input',e=>{if(e.target.classList.contains('cents'))e.
 const uid=()=>Math.random().toString(36).slice(2,10);
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 
-let db=load();
-function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.expenses)return d}catch(e){}return{expenses:[],accounts:[],deposits:[],updated:0}}
+const emptyDb=()=>({expenses:[],accounts:[],deposits:[],updated:0});
+let db=emptyDb();
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.expenses)return d}catch(e){}return emptyDb()}
 function save(){db.updated=Date.now();try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){alert('Could not save: '+e.message)}schedulePush()}
 
-// ---- cloud sync (Netlify Function + Blobs, keyed by a private sync code) ----
-const SYNCKEY='spendly.sync';let syncCode='';try{syncCode=localStorage.getItem(SYNCKEY)||''}catch(e){}
+// ---- accounts + cloud storage (Netlify Functions + Blobs) ----
 let pushT;
 const hasData=d=>d&&((d.expenses||[]).length||(d.accounts||[]).length||(d.deposits||[]).length);
 function setStatus(t){const el=$('#syncStat');if(el)el.textContent=t}
-async function api(method,body){const r=await fetch('/api/data',{method,headers:{'x-sync-code':syncCode,'content-type':'application/json'},body:body?JSON.stringify(body):undefined});
+async function post(path,body,tk){const r=await fetch(path,{method:'POST',headers:{'content-type':'application/json',...(tk?{authorization:'Bearer '+tk}:{})},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||'HTTP '+r.status),{status:r.status});return j}
+async function api(method,body,query=''){const r=await fetch('/api/data'+query,{method,headers:{authorization:'Bearer '+token,'x-sync-code':ls.get('spendly.sync')||'','content-type':'application/json'},body:body?JSON.stringify(body):undefined});
+  if(r.status===401){logout(true);throw new Error('signed out')}
   if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
-function schedulePush(){if(!syncCode)return;clearTimeout(pushT);pushT=setTimeout(push,700)}
-async function push(){setStatus('Syncing…');try{await api('PUT',db);setStatus('Synced ✓')}catch(e){setStatus('Sync failed')}}
+function schedulePush(){if(!token)return;clearTimeout(pushT);pushT=setTimeout(push,700)}
+async function push(){setStatus('Saving…');try{await api('PUT',db);setStatus('Saved ✓')}catch(e){setStatus('Save failed')}}
 function adopt(r){db={expenses:r.expenses||[],accounts:r.accounts||[],deposits:r.deposits||[],updated:r.updated||0};
   try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}render()}
-async function pull(first){if(!syncCode)return;setStatus('Syncing…');
+async function pull(){if(!token)return;setStatus('Syncing…');
   try{const r=await api('GET');
     if(r&&r.expenses){
-      if(first&&hasData(db)&&hasData(r)&&(r.updated||0)!==(db.updated||0)){
-        if(confirm("Cloud already has saved data.\n\nOK = use the cloud data on this device\nCancel = overwrite the cloud with this device's data")){adopt(r)}else{await push();return}}
-      else if((r.updated||0)>(db.updated||0))adopt(r);
+      if((r.updated||0)>(db.updated||0))adopt(r);
       else if((db.updated||0)>(r.updated||0)){await push();return}
-    }else if(hasData(db)){await push();return}
-    setStatus('Synced ✓')}catch(e){setStatus('Offline / sync error')}}
-function setupSync(){const c=prompt('Enter a private sync code (at least 8 characters). Use the SAME code on every device. Leave empty to turn sync off.',syncCode);
-  if(c===null)return;syncCode=c.trim();
-  if(syncCode&&syncCode.length<8){alert('Code must be at least 8 characters.');syncCode=''}
-  try{localStorage.setItem(SYNCKEY,syncCode)}catch(e){}
-  if(syncCode)pull(true);else setStatus('Sync off')}
+    }else{
+      // brand-new account: offer data saved before accounts existed (this device / old sync code)
+      const cands=[];let old=null;try{old=JSON.parse(localStorage.getItem(LEGACY_KEY))}catch(e){}
+      if(hasData(old))cands.push(old);
+      if(ls.get('spendly.sync')){try{const c=await api('GET',null,'?legacy=1');if(hasData(c))cands.push(c)}catch(e){}}
+      cands.sort((a,b)=>(b.updated||0)-(a.updated||0));
+      if(!hasData(db)&&cands.length&&confirm('Found existing Spendly data from before accounts. Import it into this account?')){adopt(cands[0]);save();return}
+      if(hasData(db)){await push();return}
+    }
+    setStatus('Saved ✓')}catch(e){if(e.message!=='signed out')setStatus('Offline / sync error')}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()});
+
+// ---- login / sign up ----
+let authMode='login';
+function setMode(m){authMode=m;$('#tabLogin').classList.toggle('on',m==='login');$('#tabSignup').classList.toggle('on',m==='signup');
+  $('#anameWrap').style.display=m==='signup'?'':'none';$('#anameIn').required=m==='signup';
+  $('#apassIn').autocomplete=m==='signup'?'new-password':'current-password';
+  $('#aSubmit').textContent=m==='signup'?'Create account':'Log in';$('#aerr').textContent=''}
+$('#eyeBtn').onclick=e=>{const i=$('#apassIn'),show=i.type==='password';i.type=show?'text':'password';
+  e.currentTarget.classList.toggle('on',show);e.currentTarget.setAttribute('aria-pressed',show);e.currentTarget.setAttribute('aria-label',show?'Hide password':'Show password')};
+$('#tabLogin').onclick=()=>setMode('login');$('#tabSignup').onclick=()=>setMode('signup');
+$('#authForm').onsubmit=async e=>{e.preventDefault();const btn=$('#aSubmit');btn.disabled=true;$('#aerr').textContent='';
+  try{const r=await post('/api/auth',{action:authMode,name:$('#anameIn').value,username:$('#auserIn').value,password:$('#apassIn').value});
+    ls.set(TOKEN_KEY,r.token);ls.set(USER_KEY,JSON.stringify({username:r.username,name:r.name}));
+    $('#apassIn').value='';startSession(r.token,r)}
+  catch(err){$('#aerr').textContent=err.message}btn.disabled=false};
+function startSession(tk,u){token=tk;me=u;KEY=LEGACY_KEY+'.'+u.username;db=load();
+  document.body.classList.add('authed');$('#greet').textContent='Hi '+u.name+'!';
+  $('#nav [data-tab=dash]').click();window.scrollTo(0,0);setStatus('');pull()}
+function logout(silent){if(token&&!silent)post('/api/auth',{action:'logout'},token).catch(()=>{});
+  clearTimeout(pushT);token='';me=null;ls.del(TOKEN_KEY);ls.del(USER_KEY);db=emptyDb();
+  document.body.classList.remove('authed');setMode('login');$('#authForm').reset();$('#apassIn').type='password';$('#eyeBtn').classList.remove('on')}
+async function boot(){const tk=ls.get(TOKEN_KEY);let u=null;try{u=JSON.parse(ls.get(USER_KEY))}catch(e){}
+  if(!tk)return;
+  if(u)startSession(tk,u);  // stay signed in: open instantly, then verify in the background
+  try{const r=await post('/api/auth',{action:'me'},tk);
+    if(!u)startSession(tk,r);else if(r.name!==u.name){me=r;ls.set(USER_KEY,JSON.stringify(r));$('#greet').textContent='Hi '+r.name+'!'}}
+  catch(e){if(e.status===401)logout(true)}}
 const money=n=>'RM '+(Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let month=today().slice(0,7), selDay=null;
@@ -252,8 +323,8 @@ function byCat(list){const m={};list.forEach(e=>m[e.cat]=(m[e.cat]||0)+e.amount)
 const daysIn=m=>{const[y,mo]=m.split('-').map(Number);return new Date(y,mo,0).getDate()};
 
 // ---- navigation ----
-$('#nav').onclick=e=>{const t=e.target.dataset.tab;if(!t)return;
-  $$('#nav button').forEach(b=>b.classList.toggle('active',b===e.target));
+$('#nav').onclick=e=>{const btn=e.target.closest('button'),t=btn&&btn.dataset.tab;if(!t)return;
+  $$('#nav button').forEach(b=>b.classList.toggle('active',b===btn));
   $$('section').forEach(s=>s.classList.toggle('active',s.id===t));render()};
 $$('.monthPick').forEach(i=>i.onchange=e=>{if(e.target.value){month=e.target.value;selDay=null;render()}});
 
@@ -287,14 +358,14 @@ function editExp(id){const e=db.expenses.find(x=>x.id===id);if(!e)return;closeDa
   $('#esub').value=e.sub;$('#ebank').value=e.bank;$('#enote').value=e.note;
   $('#formTitle').textContent='Edit expense';$('#eCancel').style.display='';scrollTo(0,0)}
 function delExp(id){if(confirm('Delete this expense? Its amount will be returned to the account.')){db.expenses=db.expenses.filter(x=>x.id!==id);save();render()}}
-function expRows(list){
+function expRows(list,o={}){
   if(!list.length)return'<div class="empty">No expenses yet.</div>';
   const bank=id=>(db.accounts.find(a=>a.id===id)||{}).name||'Cash';
-  return`<table><tr><th>Date</th><th>Category</th><th>Paid from</th><th class="amt">Amount</th><th></th></tr>`+
-    list.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>`<tr>
+  return`<table><tr><th>Date</th><th>Category</th><th>Paid from</th><th class="amt">Amount</th>${o.readonly?'':'<th></th>'}</tr>`+
+    (o.keepOrder?list:list.slice().sort((a,b)=>b.date.localeCompare(a.date))).map(e=>`<tr>
     <td>${e.date.slice(5)}</td><td><span class="tag" style="border:1px solid ${catColor(e.cat)}"><span class="ic">${ci(e.cat)}</span>${esc(e.cat)}${e.sub?' · '+si(e.sub)+' '+esc(e.sub):''}</span>${e.note?`<div class="hint" style="margin:2px 0 0">${esc(e.note)}</div>`:''}</td>
     <td>${esc(bank(e.bank))}</td><td class="amt">${money(e.amount)}</td>
-    <td class="amt"><button class="btn small" onclick="editExp('${e.id}')">Edit</button> <button class="btn small danger" onclick="delExp('${e.id}')">✕</button></td></tr>`).join('')+'</table>';
+    ${o.readonly?'':`<td class="amt"><button class="btn small" onclick="editExp('${e.id}')">Edit</button> <button class="btn small danger" onclick="delExp('${e.id}')">✕</button></td>`}</tr>`).join('')+'</table>';
 }
 
 // ---- dashboard ----
@@ -308,7 +379,7 @@ function renderDash(){
     stat('Daily average',money(total/elapsed),`over ${elapsed} days`)+
     stat('Top category',top?ci(top[0])+' '+esc(top[0]):'—',top?money(top[1])+' ('+Math.round(top[1]/total*100)+'%)':'No data')+
     (db.accounts.length?stat('Total savings left',money(totalSavings()),'after all expenses',totalSavings()<0?'bad':'good'):'');
-  $('#recent').innerHTML=expRows(list.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6));
+  $('#recent').innerHTML=expRows(list.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6),{readonly:true});
   const cats=byCat(list);
   $('#catBars').innerHTML=cats.length?cats.map(([c,v])=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between"><span>${ci(c)} ${esc(c)}</span><span>${money(v)} · ${Math.round(v/total*100)}%</span></div><div class="bar"><i style="width:${v/total*100}%;background:${catColor(c)}"></i></div></div>`).join(''):'<div class="empty">Nothing spent this month.</div>';
 }
@@ -356,11 +427,10 @@ function renderAnalytics(){
 function renderCal(){
   const[y,m]=month.split('-').map(Number),n=daysIn(month),first=new Date(y,m-1,1).getDay();
   const daily={};monthExp(month).forEach(e=>daily[+e.date.slice(8)]=(daily[+e.date.slice(8)]||0)+e.amount);
-  const max=Math.max(0,...Object.values(daily));
   let h=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="dow">${d}</div>`).join('');
   for(let i=0;i<first;i++)h+='<div class="day blank"></div>';
-  for(let d=1;d<=n;d++){const v=daily[d]||0,r=max?v/max:0,key=`${month}-${String(d).padStart(2,'0')}`;
-    h+=`<div class="day ${v?(r>.66?'heat3':r>.33?'heat2':'heat1'):''} ${key===today()?'today':''} ${key===selDay?'sel':''}" onclick="selDay='${key}';renderCal()"><span class="n">${d}</span><span class="t">${v?money(v):''}</span></div>`}
+  for(let d=1;d<=n;d++){const v=daily[d]||0,key=`${month}-${String(d).padStart(2,'0')}`;
+    h+=`<div class="day ${v?(v>100?'heat3':'heat1'):''} ${key===today()?'today':''} ${key===selDay?'sel':''}" onclick="selDay='${key}';renderCal()"><span class="n">${d}</span><span class="t">${v?money(v):''}</span></div>`}
   $('#calGrid').innerHTML=h;
   $('#calTotal').textContent='Month total: '+money(sum(monthExp(month)));
   const dl=db.expenses.filter(e=>e.date===selDay);
@@ -424,10 +494,10 @@ function renderSavings(){
 function backupBar(){
   if($('#backup'))return;
   const d=document.createElement('div');d.id='backup';d.style.cssText='max-width:1150px;margin:0 auto;padding:0 20px 30px;display:flex;gap:8px;flex-wrap:wrap';
-  d.innerHTML='<button class="btn small" id="bExp">Export backup</button><label class="btn small" style="cursor:pointer;display:inline-block">Import backup<input type="file" id="bImp" accept=".json" hidden></label><button class="btn small danger" id="bClr">Clear all data</button><button class="btn small" id="bSync">☁ Sync</button><span class="hint" id="syncStat" style="align-self:center;margin:0"></span>';
-  document.body.appendChild(d);$('#bSync').onclick=setupSync;setStatus(syncCode?'Sync on':'Sync off');
+  d.innerHTML='<button class="btn small" id="bExp">Export backup</button><label class="btn small" style="cursor:pointer;display:inline-block">Import backup<input type="file" id="bImp" accept=".json" hidden></label><button class="btn small danger" id="bClr">Clear all data</button><button class="btn small" id="bOut">Log out</button><span class="hint" id="syncStat" style="align-self:center;margin:0"></span>';
+  document.body.appendChild(d);$('#bOut').onclick=()=>logout();
   $('#bExp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='spendly-backup.json';a.click()};
-  $('#bImp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.expenses)throw 0;db={expenses:x.expenses||[],accounts:x.accounts||[],deposits:x.deposits||[]};save();render()}catch{alert('Invalid backup file')}};r.readAsText(f)};
+  $('#bImp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.expenses)throw 0;db={expenses:x.expenses||[],accounts:x.accounts||[],deposits:x.deposits||[],updated:0};save();render()}catch{alert('Invalid backup file')}};r.readAsText(f)};
   $('#bClr').onclick=()=>{if(confirm('Delete ALL data? This cannot be undone.')){db={expenses:[],accounts:[],deposits:[]};save();render()}};
 }
 
@@ -436,12 +506,12 @@ function render(){
   fillBankSelect($('#ebank'),true);
   const a=$('section.active').id;
   renderDash();
-  $('#expList').innerHTML=expRows(monthExp(month));
+  $('#expList').innerHTML=expRows(monthExp(month).reverse(),{keepOrder:true});
   renderSavings();renderCal();
   if(a==='analytics')renderAnalytics();
 }
 $('#viewMode').onchange=renderAnalytics;
-fillForm();$('#edate').value=today();backupBar();render();pull();
+fillForm();$('#edate').value=today();backupBar();render();boot();
 </script>
 </body>
 </html>

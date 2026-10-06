@@ -1,19 +1,24 @@
-import { getStore } from "@netlify/blobs";
-import { createHash } from "node:crypto";
+import { dataStore, dataKey, userFromReq, legacyKey } from "../lib/auth.mjs";
 
 export default async (req) => {
-  const code = req.headers.get("x-sync-code") || "";
-  if (code.length < 8) return new Response("Invalid sync code", { status: 401 });
-  const key = createHash("sha256").update(code).digest("hex");
-  const store = getStore("spendly");
+  const user = await userFromReq(req);
+  if (!user) return new Response("Not signed in", { status: 401 });
+  const store = dataStore();
 
   if (req.method === "GET") {
-    return Response.json((await store.get(key, { type: "json" })) || null);
+    // one-time import of data saved under the old private sync code
+    const legacy = new URL(req.url).searchParams.get("legacy");
+    if (legacy) {
+      const code = req.headers.get("x-sync-code") || "";
+      if (code.length < 8) return Response.json(null);
+      return Response.json((await store.get(legacyKey(code), { type: "json" })) || null);
+    }
+    return Response.json((await store.get(dataKey(user.username), { type: "json" })) || null);
   }
   if (req.method === "PUT") {
     const body = await req.json();
     if (!body || !Array.isArray(body.expenses)) return new Response("Bad data", { status: 400 });
-    await store.setJSON(key, body);
+    await store.setJSON(dataKey(user.username), body);
     return Response.json({ ok: true });
   }
   return new Response("Method not allowed", { status: 405 });
