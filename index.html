@@ -35,7 +35,7 @@ section{display:none} section.active{display:block}
 .value.p{color:var(--purple)} .value.good{color:var(--good)} .value.bad{color:var(--bad)}
 form{display:grid;gap:10px}
 label{font-size:.8rem;color:var(--muted);display:grid;gap:4px}
-input,select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:.95rem;width:100%}
+input,select{font-family:inherit;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:.95rem;width:100%}
 input:focus,select:focus{outline:2px solid var(--purple);border-color:transparent}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 table{width:100%;border-collapse:collapse;font-size:.9rem}
@@ -53,7 +53,7 @@ td{padding:9px 8px;border-bottom:1px solid #2a2146}
 .day:hover{border-color:var(--purple)} .day.sel{border-color:var(--orange)} .day.blank{background:transparent;cursor:default}
 .day.today .n{color:var(--orange);font-weight:700}
 .day .n{font-size:.8rem;color:var(--muted)} .day .t{font-size:.78rem;color:var(--cream);font-weight:600;word-break:break-all}
-.day.heat1{background:#523690}.day.heat3{background:#6d44bd}
+.day.heat1{background:#3a2a66}.day.heat3{background:#6d44bd}
 .insight{padding:10px 12px;background:var(--card2);border-left:3px solid var(--orange);border-radius:8px;margin-bottom:8px;font-size:.9rem}
 .bar{height:8px;border-radius:9px;background:var(--card2);overflow:hidden;margin-top:5px}
 .bar i{display:block;height:100%}
@@ -71,8 +71,20 @@ input::-webkit-calendar-picker-indicator{filter:sepia(1) saturate(3) hue-rotate(
 #dayModal .mbox table{font-size:.85rem}
 .calwrap{grid-template-columns:2fr 1fr}
 nav .pill,nav .lbl .m{display:none}
+.elist{display:none}
 nav .pill svg{display:none}
 @media(max-width:600px){.row{grid-template-columns:1fr}main{padding:12px}
+  .card{border-radius:22px;padding:20px}
+  .etable{display:none}.elist{display:block}
+  .er{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:14px 0;border-bottom:1px solid #2a2146}
+  .er:last-child{border-bottom:0}
+  .er .tag{background:#120d1c;font-size:.88rem;padding:5px 11px;white-space:nowrap}.er .ic{width:auto;margin-right:4px}.er .el{min-width:0}
+  .er .ea{text-align:right;font-weight:700;font-size:1.1rem;font-variant-numeric:tabular-nums}
+  .er .em{color:var(--muted);font-size:.95rem;align-self:start}
+  .er .eb{text-align:right;white-space:nowrap}
+  .er .btn.small{padding:8px 14px;font-size:.95rem;border-radius:12px;background:var(--card2)}
+  #expList{max-height:none!important}
+  .toolbar input[type=month]{background:#120d1c;border-radius:14px;padding:14px 16px;font-size:1.1rem}
   body{padding-bottom:100px}
   nav{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-wrap:nowrap;gap:0;background:#1c1530;border-top:1px solid var(--line);padding:10px 4px calc(14px + env(safe-area-inset-bottom))}
   nav button{flex:1;min-width:0;background:none!important;border:0;border-radius:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:4px;color:#f3eafc}
@@ -361,11 +373,16 @@ function delExp(id){if(confirm('Delete this expense? Its amount will be returned
 function expRows(list,o={}){
   if(!list.length)return'<div class="empty">No expenses yet.</div>';
   const bank=id=>(db.accounts.find(a=>a.id===id)||{}).name||'Cash';
-  return`<table><tr><th>Date</th><th>Category</th><th>Paid from</th><th class="amt">Amount</th>${o.readonly?'':'<th></th>'}</tr>`+
-    (o.keepOrder?list:list.slice().sort((a,b)=>b.date.localeCompare(a.date))).map(e=>`<tr>
-    <td>${e.date.slice(5)}</td><td><span class="tag" style="border:1px solid ${catColor(e.cat)}"><span class="ic">${ci(e.cat)}</span>${esc(e.cat)}${e.sub?' · '+si(e.sub)+' '+esc(e.sub):''}</span>${e.note?`<div class="hint" style="margin:2px 0 0">${esc(e.note)}</div>`:''}</td>
+  const rows=o.keepOrder?list:list.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const tag=e=>`<span class="tag" style="border:1px solid ${catColor(e.cat)}"><span class="ic">${ci(e.cat)}</span>${esc(e.cat)}${e.sub?' · '+si(e.sub)+' '+esc(e.sub):''}</span>`;
+  const btns=e=>o.readonly?'':`<button class="btn small" onclick="editExp('${e.id}')">Edit</button> <button class="btn small danger" onclick="delExp('${e.id}')">✕</button>`;
+  return`<table class="etable"><tr><th>Date</th><th>Category</th><th>Paid from</th><th class="amt">Amount</th>${o.readonly?'':'<th></th>'}</tr>`+
+    rows.map(e=>`<tr>
+    <td>${e.date.slice(5)}</td><td>${tag(e)}${e.note?`<div class="hint" style="margin:2px 0 0">${esc(e.note)}</div>`:''}</td>
     <td>${esc(bank(e.bank))}</td><td class="amt">${money(e.amount)}</td>
-    ${o.readonly?'':`<td class="amt"><button class="btn small" onclick="editExp('${e.id}')">Edit</button> <button class="btn small danger" onclick="delExp('${e.id}')">✕</button></td>`}</tr>`).join('')+'</table>';
+    ${o.readonly?'':`<td class="amt">${btns(e)}</td>`}</tr>`).join('')+'</table>'+
+    '<div class="elist">'+rows.map(e=>`<div class="er"><div class="el">${tag(e)}</div><div class="ea">${money(e.amount)}</div>
+    <div class="em">${e.date.slice(5)} · ${esc(bank(e.bank))}${e.note?' · '+esc(e.note):''}</div><div class="eb">${btns(e)}</div></div>`).join('')+'</div>';
 }
 
 // ---- dashboard ----
@@ -379,7 +396,7 @@ function renderDash(){
     stat('Daily average',money(total/elapsed),`over ${elapsed} days`)+
     stat('Top category',top?ci(top[0])+' '+esc(top[0]):'—',top?money(top[1])+' ('+Math.round(top[1]/total*100)+'%)':'No data')+
     (db.accounts.length?stat('Total savings left',money(totalSavings()),'after all expenses',totalSavings()<0?'bad':'good'):'');
-  $('#recent').innerHTML=expRows(list.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6),{readonly:true});
+  $('#recent').innerHTML=expRows(list.slice().reverse().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6),{readonly:true,keepOrder:true});
   const cats=byCat(list);
   $('#catBars').innerHTML=cats.length?cats.map(([c,v])=>`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between"><span>${ci(c)} ${esc(c)}</span><span>${money(v)} · ${Math.round(v/total*100)}%</span></div><div class="bar"><i style="width:${v/total*100}%;background:${catColor(c)}"></i></div></div>`).join(''):'<div class="empty">Nothing spent this month.</div>';
 }
@@ -397,11 +414,12 @@ function renderAnalytics(){
   let labels,data;
   if($('#viewMode').value==='week'){
     const w=Math.ceil(n/7);labels=[];data=Array(w).fill(0);
-    for(let i=0;i<w;i++)labels.push(`Week ${i+1} (${i*7+1}-${Math.min(n,i*7+7)})`);
+    for(let i=0;i<w;i++)labels.push([`Week ${i+1}`,`(${i*7+1}-${Math.min(n,i*7+7)})`]);
     daily.forEach((v,i)=>data[Math.floor(i/7)]+=v);$('#barTitle').textContent='Weekly spending';
   }else{labels=daily.map((_,i)=>i+1);data=daily;$('#barTitle').textContent='Daily spending'}
-  mk('cBar',{type:'bar',data:{labels,datasets:[{data,backgroundColor:'#9b6dff',borderRadius:6}]},
-    options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+money(c.raw)}}}}});
+  mk('cBar',{type:'bar',data:{labels,datasets:[{data,backgroundColor:'#9b6dff',borderRadius:10,borderSkipped:false,maxBarThickness:70}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+money(c.raw)}}},
+      scales:{x:{grid:{display:false},border:{display:false},ticks:{maxRotation:0,minRotation:0,autoRotation:false,autoSkip:true,font:{size:12}}},y:{beginAtZero:true,border:{display:false},grid:{color:'#352a55'}}}}});
   const [y,m]=month.split('-').map(Number),tl=[],td=[];
   for(let i=5;i>=0;i--){const d=new Date(y,m-1-i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     tl.push(d.toLocaleString('default',{month:'short',year:'2-digit'}));td.push(sum(monthExp(k)))}
