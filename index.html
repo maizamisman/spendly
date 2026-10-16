@@ -59,7 +59,7 @@ td{padding:9px 8px;border-bottom:1px solid #2a2146}
 .bar i{display:block;height:100%}
 .acct{cursor:pointer}.acct:hover{outline:1px solid var(--purple)}
 .acct .acts{flex-basis:100%;display:flex;gap:8px}
-.btn.orange{background:rgba(255,159,107,.15);color:var(--orange);border-color:var(--orange)}.btn.orange:hover{background:var(--orange);color:#2a1740}
+.btn.orange{color:#1a2a14;font-weight:700;border:0}.btn.addm{background:linear-gradient(135deg,#34c759,#b6f0a0)}.btn.wdrw{background:linear-gradient(135deg,#ff5a5f,#ffb3b0);color:#3a0f14}.btn.orange:hover{filter:brightness(1.08)}
 .hrow{display:grid;grid-template-columns:70px 1fr auto;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.85rem}
 .acct{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;background:var(--card2);border-radius:12px;margin-bottom:8px;flex-wrap:wrap}
 .hint{color:var(--muted);font-size:.8rem;margin-top:8px}
@@ -523,7 +523,7 @@ function renderSavings(){
     <div class="hint" style="margin:2px 0 0">start ${money(a.opening)} + deposits ${money(sum(db.deposits.filter(d=>d.acct===a.id)))} − spent ${money(sum(db.expenses.filter(e=>e.bank===a.id)))}</div></div>
     <div class="aright" style="text-align:right"><div class="value abal ${b<0?'bad':'good'}" style="font-size:1.2rem;font-weight:700">${money(b)}</div>
     <div class="abtn"><button class="btn small" onclick="event.stopPropagation();editAcct('${a.id}')">Edit</button> <button class="btn small danger" onclick="event.stopPropagation();delAcct('${a.id}')" title="Delete account">✕</button></div></div>
-    <div class="acts"><button class="btn small orange" onclick="event.stopPropagation();adjAcct('${a.id}',1)">Add money</button><button class="btn small orange" onclick="event.stopPropagation();adjAcct('${a.id}',-1)">Withdraw money</button></div></div>`}).join(''):'<div class="empty">No accounts yet. Optional — add one to track savings.</div>';
+    <div class="acts"><button class="btn small orange addm" onclick="event.stopPropagation();adjAcct('${a.id}',1)">Add money</button><button class="btn small orange wdrw" onclick="event.stopPropagation();adjAcct('${a.id}',-1)">Withdraw money</button></div></div>`}).join(''):'<div class="empty">No accounts yet. Optional — add one to track savings.</div>';
 }
 
 // ---- backup ----
