@@ -222,15 +222,6 @@ body.authed #auth{display:none}
         <label>Current balance<input type="number" id="abal" step="0.01" value="0"></label>
         <button class="btn primary" type="submit">Add account</button>
       </form>
-      <h2 style="margin-top:20px">Add money to an account</h2>
-      <form id="depForm">
-        <div class="row">
-          <label>Account<select id="dacct"></select></label>
-          <label>Amount<input type="text" inputmode="numeric" class="cents" id="damt" required placeholder="0.00" autocomplete="off"></label>
-        </div>
-        <label>Note<input id="dnote" placeholder="e.g. Monthly allowance Oct"></label>
-        <button class="btn" type="submit">Add deposit</button>
-      </form>
     </div>
     <div class="card"><h2>Your accounts</h2><div id="acctList"></div></div>
   </div>
@@ -471,11 +462,16 @@ function shiftMonth(d){const[y,m]=month.split('-').map(Number),x=new Date(y,m-1+
 $('#acctForm').onsubmit=e=>{e.preventDefault();
   db.accounts.push({id:uid(),name:$('#aname').value.trim(),type:$('#atype').value,opening:+$('#abal').value||0});
   save();e.target.reset();render()};
-$('#depForm').onsubmit=e=>{e.preventDefault();
-  if(!$('#dacct').value)return alert('Add an account first.');
-  const amt=getAmt($('#damt'));if(!(amt>0))return;
-  db.deposits.push({id:uid(),acct:$('#dacct').value,amount:amt,note:$('#dnote').value.trim(),date:today()});
-  save();e.target.reset();render()};
+function adjAcct(id,sign){const a=db.accounts.find(x=>x.id===id);if(!a)return;
+  $('#editBody').innerHTML=`<h2 class="mtitle">${sign>0?'Add money to':'Deduct money from'} ${esc(a.name)}</h2><form id="adjForm">
+    <label>Amount<input type="text" inputmode="numeric" class="cents" id="adjAmt" required placeholder="0.00" autocomplete="off"></label>
+    <label>Note<input id="adjNote" placeholder="${sign>0?'e.g. Monthly allowance Oct':'e.g. Withdrawal'}"></label>
+    <button class="btn primary" type="submit">${sign>0?'Add money':'Deduct money'}</button></form>`;
+  $('#adjForm').onsubmit=ev=>{ev.preventDefault();
+    const amt=getAmt($('#adjAmt'));if(!(amt>0))return;
+    db.deposits.push({id:uid(),acct:id,amount:sign*amt,note:$('#adjNote').value.trim(),date:today()});
+    save();closeEdit();render()};
+  $('#editModal').classList.add('open');$('#adjAmt').focus()}
 function delAcct(id){if(confirm('Delete this account? Expenses paid from it will become "Cash / not tracked".')){
   db.accounts=db.accounts.filter(a=>a.id!==id);db.deposits=db.deposits.filter(d=>d.acct!==id);
   db.expenses.forEach(e=>{if(e.bank===id)e.bank=''});save();render()}}
@@ -487,7 +483,7 @@ function editAcct(id){const a=db.accounts.find(x=>x.id===id);if(!a)return;
     <div class="row"><label>Type<select id="xtype">${types.map(t=>`<option${t===a.type?' selected':''}>${t}</option>`).join('')}</select></label>
     <label>Starting balance<input id="xopen" type="number" step="0.01" value="${a.opening}"></label></div>
     <h2 style="margin-top:8px">Deposits</h2>
-    ${deps.length?deps.map(d=>`<div class="dep"><span>${esc(d.date||'')} ${esc(d.note||'')}</span><input class="cents xdep" data-id="${d.id}" inputmode="numeric" value="${d.amount.toFixed(2)}"><button type="button" class="btn small danger" onclick="delDep('${d.id}','${id}')">✕</button></div>`).join(''):'<div class="hint">No deposits yet.</div>'}
+    ${deps.length?deps.map(d=>`<div class="dep"><span>${esc(d.date||'')} ${esc(d.note||'')}</span>${d.amount<0?`<span class="bad">−${(-d.amount).toFixed(2)}</span>`:`<input class="cents xdep" data-id="${d.id}" inputmode="numeric" value="${d.amount.toFixed(2)}">`}<button type="button" class="btn small danger" onclick="delDep('${d.id}','${id}')">✕</button></div>`).join(''):'<div class="hint">No deposits yet.</div>'}
     <button class="btn primary" type="submit">Save changes</button></form>`;
   $('#editForm').onsubmit=ev=>{ev.preventDefault();
     a.name=$('#xname').value.trim()||a.name;a.type=$('#xtype').value;a.opening=+$('#xopen').value||0;
@@ -500,12 +496,11 @@ function renderSavings(){
   const inc=db.accounts.reduce((s,a)=>s+a.opening+sum(db.deposits.filter(d=>d.acct===a.id)),0);
   const st=(l,v,c)=>`<div class="card stat"><div class="label">${l}</div><div class="value ${c||''}">${v}</div></div>`;
   $('#saveStats').innerHTML=db.accounts.length?st('Total savings now',money(totalSavings()),totalSavings()<0?'bad':'good')+st('Total money added',money(inc))+st('Spent from accounts',money(spent),'p'):'';
-  fillBankSelect($('#dacct'),false);
   $('#acctList').innerHTML=db.accounts.length?db.accounts.map(a=>{const b=balance(a);
     return`<div class="acct"><div><b>${esc(a.name)}</b> <span class="tag">${esc(a.type)}</span>
     <div class="hint" style="margin:2px 0 0">start ${money(a.opening)} + deposits ${money(sum(db.deposits.filter(d=>d.acct===a.id)))} − spent ${money(sum(db.expenses.filter(e=>e.bank===a.id)))}</div></div>
     <div style="text-align:right"><div class="value ${b<0?'bad':'good'}" style="font-size:1.2rem;font-weight:700">${money(b)}</div>
-    <button class="btn small" onclick="editAcct('${a.id}')">Edit</button> <button class="btn small danger" onclick="delAcct('${a.id}')">Delete</button></div></div>`}).join(''):'<div class="empty">No accounts yet. Optional — add one to track savings.</div>';
+    <button class="btn small" onclick="adjAcct('${a.id}',1)" title="Add money">+</button> <button class="btn small" onclick="adjAcct('${a.id}',-1)" title="Deduct money">−</button> <button class="btn small" onclick="editAcct('${a.id}')">Edit</button> <button class="btn small danger" onclick="delAcct('${a.id}')">Delete</button></div></div>`}).join(''):'<div class="empty">No accounts yet. Optional — add one to track savings.</div>';
 }
 
 // ---- backup ----
