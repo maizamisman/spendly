@@ -53,8 +53,8 @@ td{padding:9px 8px;border-bottom:1px solid #2a2146}
 .day:hover{border-color:var(--purple)} .day.sel{border-color:var(--orange)} .day.blank{background:transparent;cursor:default}
 .day.today .n{color:var(--orange);font-weight:700}
 .day .n{font-size:.8rem;color:var(--muted)} .day .t{font-size:.78rem;color:var(--cream);font-weight:600;word-break:break-all}
-.day.up{background:#1a1230}.day.past{background:#4a3a80}.day.risk{background:#b79cff}.day.over{background:#d6455d}
-.day.risk .n,.day.risk .t{color:#1d1333}.day.over .n,.day.over .t{color:#fff}
+.day.up{background:#1a1230}.day.past{background:#4a3a80}.day.risk{background:#6d44bd}.day.over{background:#d6455d}
+.day.risk .n,.day.risk .t{color:#ffd9b0}.day.over .n,.day.over .t{color:#fff}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin:0 0 12px}.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .limitbox{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}.limitbox input{width:110px;padding:8px}
 .insight{padding:10px 12px;background:var(--card2);border-left:3px solid var(--orange);border-radius:8px;margin-bottom:8px;font-size:.9rem}
@@ -218,7 +218,7 @@ body.authed #auth{display:none}
     <label class="limitbox">Daily limit RM<input type="number" id="dayLimit" min="1" step="1"></label>
   </div>
   <div class="grid calwrap">
-    <div class="card"><div class="legend"><span><i style="background:#1a1230;border:1px solid var(--line)"></i>Upcoming</span><span><i style="background:#4a3a80"></i>Passed / today</span><span><i style="background:#b79cff"></i>Near limit</span><span><i style="background:#d6455d"></i>Over limit</span></div><div class="cal" id="calGrid"></div></div>
+    <div class="card"><div class="legend"><span><i style="background:#6d44bd"></i>Near limit (70%+)</span><span><i style="background:#d6455d"></i>Over limit</span></div><div class="cal" id="calGrid"></div></div>
     <div class="card" id="dayCard"><h2 id="dayTitle">Select a day</h2><div id="dayList"></div></div>
   </div>
 </section>
@@ -456,7 +456,7 @@ function renderCal(){
   let h=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="dow">${d}</div>`).join('');
   for(let i=0;i<first;i++)h+='<div class="day blank"></div>';
   for(let d=1;d<=n;d++){const v=daily[d]||0,key=`${month}-${String(d).padStart(2,'0')}`;
-    const L=getLimit(),st=v>L?'over':v>=L*0.8?'risk':key>today()?'up':'past';
+    const L=getLimit(),st=v>L?'over':v>=L*0.7?'risk':key>today()?'up':'past';
     h+=`<div class="day ${st} ${key===today()?'today':''} ${key===selDay?'sel':''}" onclick="selDay='${key}';renderCal()"><span class="n">${d}</span><span class="t">${v?money(v):''}</span></div>`}
   $('#calGrid').innerHTML=h;
   $('#dayLimit').value=getLimit();
