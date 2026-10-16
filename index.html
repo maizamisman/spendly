@@ -57,6 +57,10 @@ td{padding:9px 8px;border-bottom:1px solid #2a2146}
 .insight{padding:10px 12px;background:var(--card2);border-left:3px solid var(--orange);border-radius:8px;margin-bottom:8px;font-size:.9rem}
 .bar{height:8px;border-radius:9px;background:var(--card2);overflow:hidden;margin-top:5px}
 .bar i{display:block;height:100%}
+.acct{cursor:pointer}.acct:hover{outline:1px solid var(--purple)}
+.acct .acts{flex-basis:100%;display:flex;gap:8px}
+.btn.orange{background:rgba(255,159,107,.15);color:var(--orange);border-color:var(--orange)}.btn.orange:hover{background:var(--orange);color:#2a1740}
+.hrow{display:grid;grid-template-columns:70px 1fr auto;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.85rem}
 .acct{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;background:var(--card2);border-radius:12px;margin-bottom:8px;flex-wrap:wrap}
 .hint{color:var(--muted);font-size:.8rem;margin-top:8px}
 .ic{display:inline-block;width:1.3em;text-align:center}
@@ -83,6 +87,14 @@ nav .pill svg{display:none}
   .er .em{color:var(--muted);font-size:.95rem;align-self:start}
   .er .eb{text-align:right;white-space:nowrap}
   .er .btn.small{padding:8px 14px;font-size:.95rem;border-radius:12px;background:var(--card2)}
+  .acct{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:16px}
+  .acct .aright{display:contents}
+  .acct .abal{grid-column:2;grid-row:1;text-align:right}
+  .acct .abtn{grid-column:2;grid-row:2;white-space:nowrap}
+  .acct>div:first-child{grid-column:1;grid-row:1/3;min-width:0}
+  .acct .acts{grid-column:1/-1;grid-row:3}
+  .acct .acts .btn{flex:1;padding:10px 8px;font-size:.9rem;border-radius:12px}
+  .acct .btn.small:not(.orange){padding:8px 14px;font-size:.95rem;border-radius:12px}
   #expList{max-height:none!important}
   .toolbar input[type=month]{background:#120d1c;border-radius:14px;padding:14px 16px;font-size:1.1rem}
   body{padding-bottom:100px}
@@ -472,6 +484,16 @@ function adjAcct(id,sign){const a=db.accounts.find(x=>x.id===id);if(!a)return;
     db.deposits.push({id:uid(),acct:id,amount:sign*amt,note:$('#adjNote').value.trim(),date:today()});
     save();closeEdit();render()};
   $('#editModal').classList.add('open');$('#adjAmt').focus()}
+function acctHistory(id){const a=db.accounts.find(x=>x.id===id);if(!a)return;
+  const rows=[
+    ...db.deposits.filter(d=>d.acct===id).map(d=>({date:d.date||'',label:d.note||(d.amount<0?'Withdrawal':'Money added'),amt:d.amount})),
+    ...db.expenses.filter(e=>e.bank===id).map(e=>({date:e.date,label:'Expense · '+e.cat+(e.sub?' · '+e.sub:'')+(e.note?' — '+e.note:''),amt:-e.amount}))
+  ].sort((x,y)=>y.date.localeCompare(x.date));
+  const inn=sum(rows.filter(r=>r.amt>0).map(r=>({amount:r.amt}))),out=-sum(rows.filter(r=>r.amt<0).map(r=>({amount:r.amt})));
+  $('#editBody').innerHTML=`<h2 class="mtitle">${esc(a.name)} — history</h2>
+    <div class="hint">Starting balance ${money(a.opening)} · In ${money(inn)} · Out ${money(out)} · Balance ${money(balance(a))}</div>
+    ${rows.length?rows.map(r=>`<div class="hrow"><span class="hint" style="margin:0">${esc(r.date)}</span><span>${esc(r.label)}</span><b class="${r.amt<0?'bad':'good'}" style="color:var(--${r.amt<0?'bad':'good'})">${r.amt<0?'−':'+'}${money(Math.abs(r.amt))}</b></div>`).join(''):'<div class="empty">No transactions yet.</div>'}`;
+  $('#editModal').classList.add('open')}
 function delAcct(id){if(confirm('Delete this account? Expenses paid from it will become "Cash / not tracked".')){
   db.accounts=db.accounts.filter(a=>a.id!==id);db.deposits=db.deposits.filter(d=>d.acct!==id);
   db.expenses.forEach(e=>{if(e.bank===id)e.bank=''});save();render()}}
@@ -497,10 +519,11 @@ function renderSavings(){
   const st=(l,v,c)=>`<div class="card stat"><div class="label">${l}</div><div class="value ${c||''}">${v}</div></div>`;
   $('#saveStats').innerHTML=db.accounts.length?st('Total savings now',money(totalSavings()),totalSavings()<0?'bad':'good')+st('Total money added',money(inc))+st('Spent from accounts',money(spent),'p'):'';
   $('#acctList').innerHTML=db.accounts.length?db.accounts.map(a=>{const b=balance(a);
-    return`<div class="acct"><div><b>${esc(a.name)}</b> <span class="tag">${esc(a.type)}</span>
+    return`<div class="acct" onclick="acctHistory('${a.id}')"><div><b>${esc(a.name)}</b> <span class="tag">${esc(a.type)}</span>
     <div class="hint" style="margin:2px 0 0">start ${money(a.opening)} + deposits ${money(sum(db.deposits.filter(d=>d.acct===a.id)))} − spent ${money(sum(db.expenses.filter(e=>e.bank===a.id)))}</div></div>
-    <div style="text-align:right"><div class="value ${b<0?'bad':'good'}" style="font-size:1.2rem;font-weight:700">${money(b)}</div>
-    <button class="btn small" onclick="adjAcct('${a.id}',1)" title="Add money">+</button> <button class="btn small" onclick="adjAcct('${a.id}',-1)" title="Deduct money">−</button> <button class="btn small" onclick="editAcct('${a.id}')">Edit</button> <button class="btn small danger" onclick="delAcct('${a.id}')">Delete</button></div></div>`}).join(''):'<div class="empty">No accounts yet. Optional — add one to track savings.</div>';
+    <div class="aright" style="text-align:right"><div class="value abal ${b<0?'bad':'good'}" style="font-size:1.2rem;font-weight:700">${money(b)}</div>
+    <div class="abtn"><button class="btn small" onclick="event.stopPropagation();editAcct('${a.id}')">Edit</button> <button class="btn small danger" onclick="event.stopPropagation();delAcct('${a.id}')" title="Delete account">✕</button></div></div>
+    <div class="acts"><button class="btn small orange" onclick="event.stopPropagation();adjAcct('${a.id}',1)">Add money</button><button class="btn small orange" onclick="event.stopPropagation();adjAcct('${a.id}',-1)">Withdraw money</button></div></div>`}).join(''):'<div class="empty">No accounts yet. Optional — add one to track savings.</div>';
 }
 
 // ---- backup ----
